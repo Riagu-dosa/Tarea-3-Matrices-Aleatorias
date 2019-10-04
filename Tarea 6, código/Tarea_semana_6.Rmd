@@ -1,0 +1,205 @@
+---
+title: "Tarea 6, Matrices Aleatorias"
+author: "María Guadalupe Garrido Espinosa"
+date: "2 de octubre de 2019"
+output: pdf_document
+---
+
+## Ejercicio 1
+
+En el ejercicio de la primera sesión, se llegó a la conclusión de que el valor teórico estimado para el $\lambda_{1}$ estaba por debajo del resultado al que se llegaba cuando se hacían simulaciones. Harding lo que propone es aplicar resultados de la teoría de matrices aleatorias para obtener el valor esperado de los eigenvalores para un N y T grandes y los sumariza en la siguiente proposición:
+
+\begin{center}
+\includegraphics[width=300pt]{proposition_1.PNG}
+\end{center}
+
+Recordemos los parámetros empleados para este ejercicio:
+
+$$\sigma_{f}^2=0.000158,\sigma_{b}^2=0.01,\sigma_{e}^2=0.0045,b=1, k=4, n=80$$
+
+Como $N<\frac{1}{n}\frac{\sigma_{e}^2}{\sigma_{f}^2\sigma_{b}^2}=101,396$ tomando $P$ está en el intervalo $[50,200]$, entonces los $\lambda_{i}$ se modelaron de acuerdo a la expresión 2.8 y lo que se obtiene es que ahora las estimaciones teóricas para $\lambda_{1}$ ya coinciden con el promedio observado:
+
+\begin{center}
+\includegraphics[width=350pt]{con_ajuste.PNG}
+\end{center}
+
+## Ejercicio 2, inciso a
+
+### Revise el ejemplo 6.1.7 de la pag. 170 en Rencher (2002). En este problem se econtró que $\theta_{obs}= 0.652$. Aplicando la metodología estudiada en esta sesión encuentre $theta^{TW}_{0.05}$ y rechace o acepte la hipótesis nula.
+
+### Discuta los resultados e implicaciones en el contexto del ejemplo estudiado.
+
+Supongamos que tenemos k poblaciones con matrices independientes $X_{i}$ que consiste en $n_{i}$ observaciones por población que provienen de $N_{p}(\mu_{i},\Sigma_{i})$ y además $n= \sum n_{i}$.Si queremos probar la hipótesis nula de que $H_{0}: \mu_{1}=\dots =\mu_{k}$ entonces para cada población obtenemos la media $\bar{x_{i}}$ y la matriz de covarianza $S_{i}$ normalizada de tal forma que $n_{i}S_{i}\sim W_{p}(\Sigma,n_{i}-1)$. Posterioremente calculamos la suma de cuadrados dentro de los grupos $W=\sum n_{i}S_{i} \sim W_{p}(\Sigma,n-k)$ y la suma de cruadrados entre grupos $B=\sum n_{i}(\bar{x}_{i}-\bar{x})(\bar{x}_{i}-\bar{x})' \sim W_{p}(\Sigma,k-1)$; bajo la hipótesis nula estas dos cantidades son independientes. La prueba de unión intersección usa la raíz más grande de $W^{-1}B$ o bien, de $(W+B)^{-1}B$, esta última expresión tiene bajo $H_{0}$ una distribución $\theta(p,n-k,k-1)$.
+
+Por ende, hemos de calcular la distribución de $\theta(4,48-6,6-1)=\theta(4,42,5)$, puesto que tenemos 4 variables, 6 grupos y 48 observaciones (6 grupos por 8 observaciones por grupo). Ahora, la fórmula para calcular $\theta^{TW}_{0.05}$ está dada por: 
+$$\theta^{TW}_{0.05}=e^{\mu+f_{0.05}\sigma}/(1+e^{\mu+f_{0.05}\sigma})$$
+donde $f_{0.05}$ es el 0.05 percentil de $F_{1}$, $\mu$ y $\sigma$ vienen dados por 
+
+\begin{center}
+\includegraphics[width=350pt]{formula_mu_sigma.PNG}
+\end{center}
+
+Realizando los cálculos obtenemos que $\mu=-0.76$, $\sigma=0.29$ y $f_{0.05}=0.97$, por lo tanto, $\theta^{TW}_{0.05}=0.38$ y se rechaza la hipótesis nula de que todas las medias de los grupos de árboles son iguales, luego entonces la media de al menos dos tipos de rootstocks son distintas.
+
+```{r include= FALSE, echo=FALSE}
+library(RMTstat)
+p0=4 #tenemos 4 variables
+
+n0=48 # observaciones de todas las pob
+
+k0=6 # las poblaciones
+
+p=p0
+
+m=n0-k0
+
+n= k0-1
+
+#teta(p,n-k,k-1) bajo la nula tiene esta distrib
+
+fi = 2*asin(sqrt( (max(p,n)-.5)/(m+n-1) ))
+
+gama = 2*asin(sqrt( (min(p,n)-.5)/(m+n-1) ))
+
+mu = 2*log(tan( (gama+fi)/2) )
+
+c = sin(gama)*sin(fi)*sin(gama+fi)^2  
+
+Sigma = ( (16/47^2)*(1/c) )^(1/3)
+
+f1_05 = qtw(0.95, beta=1, log = FALSE)
+
+teta_05= exp(mu+f1_05*Sigma)/ (1+exp(mu+f1_05*Sigma) )
+mu
+Sigma
+f1_05
+teta_05
+
+```
+
+## Ejercicio 2, inciso b
+
+### Obtenga una muestra de dimensiones $p \times n$, donde p y n son del mismo orden. Rechace o acepte la hipótesis nula de igualdad de varianza utilizando los estadísticos usuales (use y explique al menos dos estadísticos distintos), así como el test de Tracy-Widom. Discuta sus resultados.
+
+
+Para este ejercicio se tomará el mismo ejemplo del inciso a. Para ello se dará un mayor contexto del problema:
+
+Los datos consisten en 8 observaciones en cada una de 4 variables en 6 tipos diferentes de raíces de manzano. Las 4 variables son: 
+
+  -circunferencia del tronco (girth) a los 4 y 15 años después de la siembra; 
+
+  -el crecimiento de la extensión (ext) a los 4 años después de la siembra, 
+  
+  -el peso del árbol sobre el suelo en (weight) a los 15 años después de la siembra . 
+
+Para efectos de este ejercicio, es decir, para que p y n sean del mismo orden, se borraron 4 observaciones de cada grupo, y los datos quedaron como sigue: 4 observaciones por cada k = 6 grupo, hay entonces n = 4 × 6 = 24 árboles; se busca probar que las medias de las mediciones entre grupos son iguales, en otras palabras si no existe diferencia en promedio entre las raíces de manzanos.
+
+Los estadísticos usuales que se emplearán serán la lambda de Wilks y la raíz más grande de Roy. A continuación se da una breve explicación de los mismos:
+
+### Lambda de Wilks
+
+Este test de razón de verosimilitud tiene como hipótesis nula $H_{0}: \mu_{1}=\dots =\mu_{k}$ y el estadístico para esta prueba puede ser escrito en términos de los eigenvalores de $W^{-1}B$, con W la suma de cuadrados dentro de los grupos y B el equivalente entre grupos. El término s es el número de los eigenvalores de $W^{-1}B$ que son distintos de cero.
+
+$$\Lambda= \prod_{i=1}^{s} \frac{1}{1+\lambda_{i}}$$
+Se rechaza la hipótesis nula si $\Lambda\leq \Lambda_{\alpha,p,v_{H}},v_{E}$, donde p es el número de variables, $v_{H}$ los grados de libertad para la hipótesis y $v_{E}$ los grados de libertad para el error.
+
+### Roy Test
+
+Esta prueba también la usamos teniendo como hipótesis nula $H_{0}: \mu_{1}=\dots =\mu_{k}$, el estadístico está dado por:
+
+$$\theta= \frac{\lambda_{1}}{1+\lambda_{i}}$$
+Se rechaza la hipótesis nula si $\theta \geq \theta_{\alpha,s,m,N}$, donde $s=min(p,v_{H})$, $m=\frac{1}{2}(|v_{H}-p|-1)$ y $N=\frac{1}{2}(v_{H}-p-1)$
+
+### Resultados
+
+Realizando la prueba de razón de verosimilitud, se obtiene que el lambda de Wilks es igual a 0.45 y con un p valor prácticamente de cero se rechaza la hipótesis nula. Al realizar el estadístico de Roy, obtenemos que el eigenvalor más alto observado es igual a 3.47, por ende $\theta=0.77$ y con un p valor muy cercano a cero también se rechaza la hipótesis nula.
+
+Para el test con Tracy Widom, los parámetros a considerar serán $p=4, n-k=18,k-1=5 $. Realizando los cálculos obtenemos que $\mu=0.37$, $\sigma=0.23$ y $f_{0.05}=0.97$, por lo tanto, $\theta^{TW}_{0.05}=0.64$. Como el eigenvalor más alto encontrado es igual a 3.47, entonces $\theta_{obs}=0.77$ y se rechaza la hipótesis nula al 5% de significancia.
+
+Estos resultados implican que sin importar que se hayan eliminado la mitad de las observaciones, se tiene que la media para al menos dos grupos de árboles es distinta. Por otro lado, hacer la prueba de Tracy Widom, podría resultar más "sencillo" una vez que se conoce la distribución $F_{1}$, puesto que únicamente le pasamos los parámetros y podemos hacer inferencias. 
+
+
+```{r include= FALSE, echo=FALSE}
+
+
+library(heplots)
+library(RMTstat)
+
+data(RootStock)
+
+
+#Vamos a quitar 4 obs de cada grupo
+roots <- RootStock[5:44,]
+roots <- roots[-c(9:12),]
+roots <- roots[-c(25:28),]
+roots <- roots[-c(17:20),]
+roots <- roots[-c(9:12),]
+
+table(roots$rootstock)#Verificamos que nos quedemos sólo con 4 observaciones
+#
+
+#Hacemos MANOVA en la forma convencional
+manRes1 <- manova(cbind(girth4, ext4, girth15, weight15) ~ rootstock, data=roots)
+
+summary(manRes1, test="Wilks") #sacamos la lambda de wilks
+                               #con el p valor que resulta, vemos que rechazamos la nula
+
+summary(manRes1, test="Roy") # obtenemos el estadístico de Roy
+                             # con el p valor que resulta, vemos que rechazamos la nula
+
+resultado <- summary(manRes1, test="Roy") #Lo que da como Roy es el lambda más alto
+3.4707/4.4707#el estadístico de Roy
+
+resultado$Eigenvalues #obtenemos los eigenvalores, vemos que el más grande es 3.47(este es nuestro lambda observad)
+
+#para hacer tracy widom, necesito calcular el estadístico tracy y también el lambda máximo observado
+
+############################################################
+# Sacamos el test tracy widom
+############################################################
+library(RMTstat)
+
+p0=4 #tenemos 4 variables
+
+n0=24 # observaciones de todas las pob
+
+k0=6 # las poblaciones
+
+p=p0
+
+m=n0-k0
+
+n= k0-1
+
+#teta(p,n-k,k-1) bajo la nula tiene esta distrib
+
+fi = 2*asin(sqrt( (max(p,n)-.5)/(m+n-1) ))
+
+gama = 2*asin(sqrt( (min(p,n)-.5)/(m+n-1) ))
+
+mu = 2*log(tan( (gama+fi)/2) )
+
+c = sin(gama)*sin(fi)*sin(gama+fi)^2  
+
+Sigma = ( (16/47^2)*(1/c) )^(1/3)
+
+f1_05 = qtw(0.95, beta=1, log = FALSE)
+
+teta_05= exp(mu+f1_05*Sigma)/ (1+exp(mu+f1_05*Sigma) )
+
+mu
+Sigma
+f1_05
+teta_05
+
+
+#Por otro lado, el teta_tracy = 0.6473 < lambda_max_observado 3.47, ==> rechazamos
+
+
+```
+
+## Ejercicio 3
+
+\begin{center}
+\includegraphics[width=350pt]{densidad_eigen.PNG}
+\end{center}
